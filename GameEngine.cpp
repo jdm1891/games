@@ -85,6 +85,7 @@ void GameEngine::run()
 		default:
 			exit(1);
 		}
+		sf::sleep(sf::milliseconds(1));
 	}
 }
 
