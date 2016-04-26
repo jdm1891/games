@@ -1,6 +1,5 @@
 #include "GameEngine.h"
 #include "TileMap.h"
-#include "StaticLevelData.h"
 #include "ImageToTileID.h"
 #include <iostream>
 
@@ -45,7 +44,7 @@ GameEngine::GameEngine()
 	 
 	//Create level
 	
-	_level.init(50, 50, &ImageToTileID::ConvertToArray("./level/test.png")[0], sf::Vector2u(20, 20), FillStyle::FILL, "set.png");
+	_level.init(50, 50, &ImageToTileID::ConvertToArray("./level/test.png")[0], sf::Vector2u(32, 32), FillStyle::FILL, "./level/set.png");
 
 	player.init("set2.png", sf::Vector2f(10, 10));
 	player.setPosition(0, 0);
@@ -67,7 +66,7 @@ sf::VideoMode GameEngine::getGameBorder()
 
 void GameEngine::run()
 {
-	while (true)
+	while (_window.isOpen())
 	{
 		switch (_gameState)
 		{
@@ -90,7 +89,7 @@ void GameEngine::run()
 
 void GameEngine::processEvents()
 {
-	if (_window.pollEvent(_event))
+	while (_window.pollEvent(_event))
 	{
 		switch (_event.type)
 		{

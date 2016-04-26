@@ -1,6 +1,5 @@
 #pragma once
 #include "Entity.h"
-#include "SmartEnum.h"
 #include <SFML/Graphics.hpp>
 #include <string>
 
@@ -75,6 +74,9 @@ public:
 
 	~TileMap();
 protected:
+
+	//Create variation on the tile
+	int createVariation(int x, int y);
 
 	//Create, called by init
 	void create();
