@@ -1,16 +1,21 @@
 #pragma once
-#include "Entity.h"
-#include <SFML/Graphics.hpp>
-#include <string>
+#include "stdafx.h"
+
 
 //Entity forward declaration
 class Entity;
 
 //Types of tiles
-enum class TileID { GRASS, WATER, ERROR_TILE, NUMBER_OF_TYPES };
+enum class TileID { GRASS, WATER, SAND, ROCK, ERROR_TILE, NUMBER_OF_TYPES };
 
 //Fill style: FILL-Strech to fill screen	| REPEAT-Don't strech	| NONE-No effects
 enum class FillStyle { /*DEBUG ONLY*/ FILL, /*NOT YET IMPLEMENTED*/ REPEAT, NONE};
+
+struct TotalSize
+{
+	int width;
+	int height;
+};
 
 class TileMap : public sf::Drawable, public sf::Transformable
 {
@@ -72,9 +77,14 @@ public:
 	///////////////////////////////////////////////////////////////////////////////////
 	void findOccupingTiles(Entity &entity);
 
+	///////////////////////////////////////////////////////////////////////////////////
+	///findOccupyingTiles:	get the total width/height of the tilemap in pixels
+	///////////////////////////////////////////////////////////////////////////////////
+	TotalSize getTotalSize();
+
 	~TileMap();
 protected:
-
+	TotalSize _TotalSize;
 	//Create variation on the tile
 	int createVariation(int x, int y);
 

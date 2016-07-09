@@ -1,7 +1,8 @@
 #include "Entity.h"
-#include "TileMap.h"
-#include <iostream>
 
+#include <string>
+
+#include <SFML\Graphics.hpp>
 
 
 void Entity::update()

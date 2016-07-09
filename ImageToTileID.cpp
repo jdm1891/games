@@ -1,9 +1,5 @@
-#include "ImageToTileID.h"
-#include <stdlib.h>
-#include <iostream>
-#include <SFML/Graphics.hpp>
-#include <string>
-#include <vector>
+#include "stdafx.h"
+
 
 std::vector<TileID> ImageToTileID::ConvertToArray(std::string filepath)
 {
@@ -15,8 +11,10 @@ std::vector<TileID> ImageToTileID::ConvertToArray(std::string filepath)
 	std::vector<std::pair<TileID, sf::Color>> TileToColor;
 
 	//Define the pairs
+	TileToColor.emplace_back(TileID::GRASS, sf::Color(0, 255, 0, 255));
 	TileToColor.emplace_back(TileID::WATER, sf::Color(0, 0, 255, 255));
-	TileToColor.emplace_back(TileID::GRASS, sf::Color(0, 0, 25, 255));
+	TileToColor.emplace_back(TileID::SAND, sf::Color(255, 255, 0, 255));
+	TileToColor.emplace_back(TileID::ROCK, sf::Color(100, 100, 100, 255));
 	TileToColor.emplace_back(TileID::ERROR_TILE, sf::Color(0, 0, 0, 0));
 
 	//Checks if all tiles have been mapped!

@@ -1,27 +1,18 @@
 #include "GameEngine.h"
-#include "TileMap.h"
+#include "Playlist.h"
 #include "ImageToTileID.h"
-#include <iostream>
-
+#include "TileMap.h"
+#include <SFML\Graphics.hpp>
 
 /*
 
 N£ED TO:
 
-collision detection
-{
-	find position of all four corners and see if they touch a bad tile, if they do
-	prohibit movement of entity.
+	collision detection
 
-	create classes:
-		Player			:	entity
-		Enemy			:	entity
-		FlyingEntity	:	entity
-		FlyingEnemy		:	FlyingEntity
-		
-		Tile2D	- takes a coordinate, and returns the tile number that coordinate lands on(takes a &TileMap and a 
-		
-}
+	TileMap::GetTile2D(Function that returns tileID of an x,y coordinate)
+	
+	Sort out GameEngine.Cpp & h - remove junk
 
 
 */
@@ -33,21 +24,34 @@ GameEngine::GameEngine()
 
 	//Set size of game window(90% of width & height)
 	_screenBorder = sf::VideoMode::getDesktopMode();
-	_gameBorder = sf::VideoMode(_screenBorder.width*0.9, _screenBorder.height*0.9);
+	_gameBorder = sf::VideoMode(GAMEWIDTH, GAMEHEIGHT);
+	//Create level
 	
+	_level.init(50, 50, &ImageToTileID::ConvertToArray("./level/test.png")[0], sf::Vector2u(32, 32), FillStyle::FILL, "./level/set5.png");
+
+	//Set up Level Render
+
+	_levelRender.create(_level.getTotalSize().width, _level.getTotalSize().height);
+
+	//View - make centre half of size to start at top left
+	_view.setCenter(sf::Vector2f((double)_level.getTotalSize().width/2, (double)_level.getTotalSize().height/2));
+	_view.setSize(sf::Vector2f((double)_level.getTotalSize().width/3 , (double)_level.getTotalSize().height/3));
+
+	//Create the player
+	///
+
 	//Window
 	_settings.antialiasingLevel = 8;
 	_window.create(_gameBorder, "Pacman", sf::Style::None, _settings);
 	_window.setVerticalSyncEnabled(true);
-	//Set window to be visible
-	_window.setPosition(sf::Vector2i(_window.getPosition().x, _window.getPosition().y-_screenBorder.height*0.02));
-	 
-	//Create level
-	
-	_level.init(50, 50, &ImageToTileID::ConvertToArray("./level/test.png")[0], sf::Vector2u(32, 32), FillStyle::FILL, "./level/set.png");
 
-	player.init("set2.png", sf::Vector2f(10, 10));
-	player.setPosition(0, 0);
+	//Set window to be visible
+	_window.setPosition(sf::Vector2i(_window.getPosition().x, _window.getPosition().y - _screenBorder.height*0.02));
+
+	//Start the music player
+	_musicPlayer.loadDefault();
+	_musicPlayer.start();
+
 	//Run the game
 	run();
 
@@ -60,8 +64,17 @@ GameEngine::~GameEngine()
 
 sf::VideoMode GameEngine::getGameBorder()
 {
-
 	return _gameBorder;
+}
+
+GameState GameEngine::getGameState()
+{
+	return _gameState;
+}
+
+sf::RenderWindow & GameEngine::window()
+{
+	return _window;
 }
 
 void GameEngine::run()
@@ -74,14 +87,26 @@ void GameEngine::run()
 			processEvents();
 			draw();
 			physics();
+			updateView();
 			break;
 
 		case PAUSE:
+			checkIfUnpaused();
+			_window.clear();
+			draw();
+			_window.draw(_pauseMenu);
+			_window.display();
 			break;
 
 		case QUIT:
 			exit(0);
-		default:
+			break;
+
+		case SUSPENDED:
+			checkIfUnpaused();
+			_musicPlayer.pause();
+			break;
+		default: 
 			exit(1);
 		}
 	}
@@ -93,20 +118,20 @@ void GameEngine::processEvents()
 	{
 		switch (_event.type)
 		{
+		case sf::Event::KeyPressed:
+			processKeyboardInput();
+			break;
+		
 		case sf::Event::Closed:
 			_gameState = QUIT;
 			break;
 
 		case sf::Event::LostFocus:
-			_gameState = PAUSE;
+			_gameState = SUSPENDED;
 			break;
 
 		case sf::Event::GainedFocus:
 			_gameState = PLAY;
-			break;
-
-		case sf::Event::KeyPressed:
-			processKeyboardInput();
 			break;
 
 		default:
@@ -118,40 +143,92 @@ void GameEngine::processEvents()
 
 void GameEngine::processKeyboardInput()
 {
+	//Speed per second
+	static float m = 5;
 	if (_event.key.code == sf::Keyboard::Escape)
 	{
-		_gameState = QUIT;
+		_gameState = PAUSE;
 		return;
 	}
 	if (_event.key.code == sf::Keyboard::Up)
 	{
-		player.move(0, -1);
+		_view.move(0, -m);
+		return;
 	}
 	if (_event.key.code == sf::Keyboard::Down)
 	{
-		player.move(0, 1);
+		_view.move(0, m);
+		return;
 	}
 	if (_event.key.code == sf::Keyboard::Left)
 	{
-		player.move(-1, 0);
+		_view.move(-m, 0);
+		return;
 	}
 	if (_event.key.code == sf::Keyboard::Right)
 	{
-		player.move(1, 0);
+		_view.move(m, 0);
+		return;
 	}
 }
 
 void GameEngine::draw()
 {
-	_window.clear(sf::Color::Yellow);
-	_window.draw(_level);
-	_window.draw(player);
-	_window.display();
+	_levelRender.clear(sf::Color::Yellow);
+	_levelRender.draw(_level);
+	_levelRender.display();
+
+	//Only clear when not paused
+	if (_gameState != PAUSE)
+	{
+		_window.clear(sf::Color::Yellow);
+	}
+	
+	//Draw commands
+	_window.draw(sf::Sprite(_levelRender.getTexture()));
+
+	//Only display when not paused
+	if (_gameState != PAUSE)
+	{
+		_window.display();
+	}
 }
 
 void GameEngine::physics()
 {
-	_level.findOccupingTiles(player);
+	_level.findOccupingTiles(_player);
+	_musicPlayer.start();
+}
+
+void GameEngine::checkIfUnpaused()
+{
+	while (_window.pollEvent(_event))
+	{
+		switch (_event.type)
+		{
+		case sf::Event::KeyPressed:
+			if (_event.key.code == sf::Keyboard::Escape)
+			{
+				_gameState = PLAY;
+			}
+			break;
+		case sf::Event::LostFocus:
+			_gameState = SUSPENDED;
+			break;
+		case sf::Event::GainedFocus:
+			_gameState = PAUSE;
+			_musicPlayer.start();
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+void GameEngine::updateView()
+{
+	_view.move(sin(time(nullptr)),(cos(time(nullptr))));
+	_levelRender.setView(_view);
 }
 
 

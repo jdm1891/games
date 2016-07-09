@@ -1,9 +1,14 @@
 #pragma once
-#include <SFML/Graphics.hpp>
-#include "TileMap.h"
-#include "Level.h"
 
-enum GameState { PLAY, PAUSE, QUIT };
+#include "GameEngine.h"
+#include "TileMap.h"
+#include "Playlist.h"
+#include "PauseMenu.h"
+#include <SFML/Graphics.hpp>
+#define GAMEWIDTH sf::VideoMode::getDesktopMode().width*0.9
+#define GAMEHEIGHT sf::VideoMode::getDesktopMode().height*0.9
+
+enum GameState { PLAY, PAUSE, QUIT, SUSPENDED };
 
 class GameEngine
 {
@@ -12,6 +17,8 @@ public:
 	~GameEngine();
 
 	sf::VideoMode getGameBorder();
+	GameState getGameState();
+	sf::RenderWindow& window();
 	void run();
 
 private:
@@ -21,6 +28,8 @@ private:
 	void processKeyboardInput();
 	void draw();
 	void physics();
+	void checkIfUnpaused();
+	void updateView();
 	
 	//Stuff for window
 	sf::RenderWindow _window;
@@ -38,6 +47,17 @@ private:
 
 	//Tile Map
 	TileMap _level;
+	sf::RenderTexture _levelRender;
 
-	Entity player;
+	//player
+	Entity _player;
+
+	//Music player
+	Playlist _musicPlayer;
+
+	//View
+	sf::View _view;
+
+	//Pause menu
+	PauseMenu _pauseMenu;
 };
